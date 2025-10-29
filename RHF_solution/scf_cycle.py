@@ -52,6 +52,7 @@ def perform_rhf_scf_calculation(structure, basis_type=gaussian_1s_sto_3g, scf_ac
     two_electron_integrals = two_electron_integral_matrix(basis_set)
     E_initial = 0.0
     for i in range(1, max_steps+1):
+        #print(f'Begin Step {i}')
         if i == 1:
             C, epsilon, F = solve_fock_equation(H_core, 0, X_can)
             P = create_density_matrix_from_coefficients(C)
@@ -76,6 +77,7 @@ def perform_rhf_scf_calculation(structure, basis_type=gaussian_1s_sto_3g, scf_ac
                 E = compute_total_energy(P, H_core, F)
                 print(f'Final Total energy = {E}')
                 break
+        #print(f'End Step {i}')
 
 
 
