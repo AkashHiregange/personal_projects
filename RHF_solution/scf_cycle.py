@@ -50,13 +50,12 @@ def perform_rhf_scf_calculation(structure, basis_type=gaussian_1s_sto_3g, scf_ac
     T, V = h_core(basis_set, structure)
     H_core = T + V
     two_electron_integrals = two_electron_integral_matrix(basis_set)
+    E_initial = 0.0
     for i in range(1, max_steps+1):
-        E_initial = 0.0
         if i == 1:
             C, epsilon, F = solve_fock_equation(H_core, 0, X_can)
             P = create_density_matrix_from_coefficients(C)
-            print('P = ', P)
-        elif i == max_steps+1:
+        elif i == max_steps:
             print('SCF cycle not converged. Printing out the final energy anyway, but it cannot be trusted.')
             G = compute_G_matrix(H_core, P, two_electron_integrals)
             C, epsilon, F = solve_fock_equation(H_core, G, X_can)
@@ -66,17 +65,18 @@ def perform_rhf_scf_calculation(structure, basis_type=gaussian_1s_sto_3g, scf_ac
             G = compute_G_matrix(H_core, P, two_electron_integrals)
             C, epsilon, F = solve_fock_equation(H_core, G, X_can)
             E_final = compute_total_energy(P, H_core, F)
-            print(f'Total energy at step {i - 1} = {E}')
+            print(f'Total energy at step {i - 1} = {E_final}')
             P = create_density_matrix_from_coefficients(C)
-            print('P = ', P)
             E_diff = E_final-E_initial
+            E_initial = E_final
             if np.abs(E_diff)<=scf_accuracy_energy:
+                print('SCF cycle converged. Printing out final total energy.')
+                G = compute_G_matrix(H_core, P, two_electron_integrals)
+                C, epsilon, F = solve_fock_equation(H_core, G, X_can)
+                E = compute_total_energy(P, H_core, F)
+                print(f'Final Total energy = {E}')
                 break
-    print('SCF cycle converged. Printing out final total energy.')
-    G = compute_G_matrix(H_core, P, two_electron_integrals)
-    C, epsilon, F = solve_fock_equation(H_core, G, X_can)
-    E = compute_total_energy(P, H_core, F)
-    print(f'Final Total energy = {E}')
+
 
 
 
