@@ -98,3 +98,23 @@ def two_electron_integral_matrix(basis_set):
                                     two_e_integral_mat_element+=integral
                     I[u,v,w,x] = np.round(two_e_integral_mat_element,5)
     return I
+
+
+def create_unitary_from_overlap(overlap_matrix):
+    import numpy as np
+    U = np.linalg.eig(overlap_matrix)[1]
+    return U
+
+
+def create_s_half(overlap_matrix, unitary_transformation):
+    import numpy as np
+    s = np.round(unitary_transformation.T @ overlap_matrix @ unitary_transformation, 4)
+    s_diagonal = 1 / np.sqrt(np.diagonal(s))
+    s_half = np.diag(s_diagonal)
+    return s_half
+
+
+def canonical_transformation(unitary_transformation, s_half):
+    import numpy as np
+    X_can = unitary_transformation @ s_half
+    return X_can
