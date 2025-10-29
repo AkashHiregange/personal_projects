@@ -1,4 +1,4 @@
-from compute_matrices import gaussian_1s_sto_3g
+from compute_matrices import *
 
 def generate_basis(structure, basis_type=gaussian_1s_sto_3g):
     import numpy as np
@@ -39,3 +39,45 @@ def compute_total_energy(P, H_core, F):
     import numpy as np
     E = 0.5 * (np.sum(P.T * (H_core + F)))
     return E
+
+def perform_rhf_scf_calculation(structure, basis_type=gaussian_1s_sto_3g, scf_accuracy_energy=1e-5, max_steps=100):
+    import numpy as np
+    basis_set = generate_basis(structure, basis_type=basis_type)
+    S = overlap_matrix(basis_set)
+    U = create_unitary_from_overlap(S)
+    s_half = create_s_half(S, U)
+    X_can = canonical_transformation(U, s_half)
+    T, V = h_core(basis_set, structure)
+    H_core = T + V
+    two_electron_integrals = two_electron_integral_matrix(basis_set)
+    for i in range(1, max_steps+1):
+        E_initial = 0.0
+        if i == 1:
+            C, epsilon, F = solve_fock_equation(H_core, 0, X_can)
+            P = create_density_matrix_from_coefficients(C)
+            print('P = ', P)
+        elif i == max_steps+1:
+            print('SCF cycle not converged. Printing out the final energy anyway, but it cannot be trusted.')
+            G = compute_G_matrix(H_core, P, two_electron_integrals)
+            C, epsilon, F = solve_fock_equation(H_core, G, X_can)
+            E = compute_total_energy(P, H_core, F)
+            print(f'Final Total energy = {E}')
+        else:
+            G = compute_G_matrix(H_core, P, two_electron_integrals)
+            C, epsilon, F = solve_fock_equation(H_core, G, X_can)
+            E_final = compute_total_energy(P, H_core, F)
+            print(f'Total energy at step {i - 1} = {E}')
+            P = create_density_matrix_from_coefficients(C)
+            print('P = ', P)
+            E_diff = E_final-E_initial
+            if np.abs(E_diff)<=scf_accuracy_energy:
+                break
+    print('SCF cycle converged. Printing out final total energy.')
+    G = compute_G_matrix(H_core, P, two_electron_integrals)
+    C, epsilon, F = solve_fock_equation(H_core, G, X_can)
+    E = compute_total_energy(P, H_core, F)
+    print(f'Final Total energy = {E}')
+
+
+
+
