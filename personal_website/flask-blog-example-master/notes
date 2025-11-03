@@ -1,0 +1,40 @@
+Web development
+server: required for almost all web development projects. serverside script is usually php, asp, java. When python
+became popular, we thought if we could use python for server side scripting, then web site development would become
+relatively easier due to the easy syntax of python
+
+DJANGO, FLASK are one of the python based scripting for serverside code
+
+clients: browser is an example of client; javascript is used. Data transfer through a protocol like http (hypertext
+transfer protocol) Client side scripting is usually javascript
+
+server and clients are both connected through internet
+
+static: public folder (by default)
+
+template: part of website code is present in the folder and hence a Private folder which cannot be accessed
+by anyone
+
+bootstrap websites can be used to download html templates for the front end of the website
+
+
+config.json file helps to make sure that the parameters within the website are variable and dynamic.
+If anybody wishes to change any parameter, then they don't have to go to through the whole code. They can simply
+change it in the config.json file
+
+target = "_blank" opens the corresponding link in new tab
+
+Sending emails using flask:
+pip install flask-mail
+using smtp server of gmail
+sending an email looks less secure as of now and hence we will not look into it unless extremely necessary
+
+
+connecting the posts sections of the blog to the database
+
+slug: the end portion of the links that you see without spaces. There are some rules to write this
+
+images can also be added dynamically using the database shown as an examples in the post database
+
+
+
