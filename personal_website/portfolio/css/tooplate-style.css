@@ -19,7 +19,7 @@ body {
 
 .small-text {
   color: #5b5b5b;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: bold;
   padding: 8px 16px;
   border-radius: 50px;
@@ -111,7 +111,7 @@ b, strong {
   display: inline-block;
   vertical-align: top;
   margin-top: 5px;
-  min-width: 260px;
+  min-width: 460px;
   position: relative;
 }
 
