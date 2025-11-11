@@ -14,8 +14,15 @@ body {
     padding-left: 17rem; } }
 
 h1,
-h2,
-h3,
+h2 {
+  font-family: 'Arial', serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #343a40; }
+h3 {
+  font-family: 'Arial', serif;
+  font-weight: 700;
+  color: #343a40; }
 h4,
 h5,
 h6 {
