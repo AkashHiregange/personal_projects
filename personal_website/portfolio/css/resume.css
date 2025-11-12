@@ -23,7 +23,10 @@ h3 {
   font-family: 'Arial', serif;
   font-weight: 700;
   color: #343a40; }
-h4,
+h4 {
+  font-family: 'Arial', serif;
+  font-weight: 700;
+  color: #343a40; }
 h5,
 h6 {
   font-family: 'Arial', serif;
@@ -37,6 +40,9 @@ h1 {
 
 h2 {
   font-size: 3.5rem; }
+
+h4 {
+    font-size: 2.5rem;}
 
 .subheading {
   font-weight: 500;
