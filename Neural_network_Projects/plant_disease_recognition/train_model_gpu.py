@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-from torchvision.io import decode_image
 import numpy as np 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -149,3 +148,78 @@ print(summary(model, (32,3,256,256)))
 
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
 criterion = torch.nn.CrossEntropyLoss()
+
+def train_model(model, train_loader, val_loader, criterion, optimizer,model_name, num_epochs=10):
+    print(f'Starting training the {model_name}.pt.......')
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
+    model.to(device)
+    
+    train_accuracy = []
+    train_loss = []
+    validation_accuracy = []
+    validation_loss = []
+    num_epochs = num_epochs
+    for epoch in range(1, num_epochs+1):
+        print(f"Epoch [{epoch}/{num_epochs}]")
+        running_loss = 0.0
+        correct_train = 0
+        total_train = 0
+        for batch_index, (images, labels) in enumerate(train_loader):
+            images.to(device)
+            labels.to(device)
+            model.train()
+            optimizer.zero_grad()
+            out = model(images)
+            loss = criterion(out, labels)
+            loss.backward()
+            optimizer.step()
+
+            # Track training loss and accuracy
+            running_loss += loss.item() * images.size(0)  # loss.item() is the avg loss per batch
+            _, predicted = torch.max(out.data, 1)
+            total_train += labels.size(0)
+            correct_train += (predicted == labels).sum().item()
+
+        epoch_train_loss = running_loss / len(train_loader.dataset)
+        epoch_train_acc = correct_train / total_train
+        train_loss.append(epoch_train_loss)
+        train_accuracy.append(epoch_train_acc)
+
+        model.eval()  # Set model to evaluation mode (disables dropout, uses running stats for batch norm)
+        val_loss = 0.0
+        correct_val = 0
+        total_val = 0
+
+        with torch.no_grad():
+            for batch, (images, labels) in enumerate(val_loader):
+                images.to(device)
+                labels.to(device)
+                out = model(images)
+                loss = criterion(out, labels)
+
+                val_loss += loss.item() * images.size(0)
+                _, predicted = torch.max(out.data, 1)
+                total_val += labels.size(0)
+                correct_val += (predicted == labels).sum().item()
+
+            # Calculate validation statistics for the epoch
+        epoch_val_loss = val_loss / len(val_loader.dataset)  
+        epoch_val_acc = correct_val / total_val              
+        validation_loss.append(epoch_val_loss)                    
+        validation_accuracy.append(epoch_val_acc) 
+
+
+        print(f"  Train Loss: {epoch_train_loss:.4f}, Train Acc: {epoch_train_acc:.4f}")
+        print(f"  Validation Loss: {epoch_val_loss:.4f}, Validation Acc: {epoch_val_acc:.4f}")
+        print('-'*30)
+        
+    print("Finished Training.....")
+    print('Saving model and the training accuracies....')
+    torch.save(model, f'{model_name}.pt')
+    training_details = {'train_losses': train_loss, 'train_accuracies': train_accuracy, 
+                        'val_losses': validation_loss, 'val_accuracies': validation_accuracy}
+    torch.save(training_details, f'train_val_accuracy_data.pt')
+    return training_details
+
+train_model(model, val_dl, val_dl, criterion, optimizer,'recognize_disease_test')
