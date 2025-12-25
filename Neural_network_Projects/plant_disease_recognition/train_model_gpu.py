@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np 
 import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
+#import seaborn as sns
 import torch
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
@@ -49,7 +49,7 @@ class ImageDatasetFromFolders(Dataset):
 #         print(label)
         if self.transform:
             image = self.transform(image)
-            image = self.scale_image(image)
+#            image = self.scale_image(image)
         return image, label
     
 base = os.getcwd()
@@ -58,13 +58,14 @@ test_dir = os.path.join(base,'Test')
 val_dir = os.path.join(base,'Validation')
 
 image_size = (256,256)
-transform = transforms.Compose([transforms.PILToTensor(), transforms.Resize(image_size)])
+transform = transforms.Compose([transforms.ToTensor(), transforms.Resize(image_size)])
+#transform = transforms.Compose([transforms.PILToTensor(), transforms.Resize(image_size)])
 # transform = transforms.Compose([transforms.Resize(image_size)])
 train_data = ImageDatasetFromFolders(train_dir, transform=transform)
 test_data = ImageDatasetFromFolders(test_dir, transform=transform)
 val_data = ImageDatasetFromFolders(val_dir, transform=transform)
 print((train_data[2][0]).dtype) #check the type of the data to make sure it is torch.float32
-print(train_data[1000]) #check if the data has been scaled
+print(train_data[1000][0]) #check if the data has been scaled
 print(test_data.__len__())
 print(val_data.__len__())
 
@@ -143,8 +144,8 @@ class CNN(nn.Module):
 model = CNN(in_channels=3, num_classes=3)
 print(model)
 
-from torchinfo import summary
-print(summary(model, (32,3,256,256)))
+#from torchinfo import summary
+#print(summary(model, (32,3,256,256)))
 
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
 criterion = torch.nn.CrossEntropyLoss()
@@ -153,7 +154,7 @@ def train_model(model, train_loader, val_loader, criterion, optimizer,model_name
     print(f'Starting training the {model_name}.pt.......')
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
-    model.to(device)
+    model = model.to(device)
     
     train_accuracy = []
     train_loss = []
@@ -166,8 +167,8 @@ def train_model(model, train_loader, val_loader, criterion, optimizer,model_name
         correct_train = 0
         total_train = 0
         for batch_index, (images, labels) in enumerate(train_loader):
-            images.to(device)
-            labels.to(device)
+            images = images.to(device)
+            labels = labels.to(device)
             model.train()
             optimizer.zero_grad()
             out = model(images)
@@ -177,12 +178,13 @@ def train_model(model, train_loader, val_loader, criterion, optimizer,model_name
 
             # Track training loss and accuracy
             running_loss += loss.item() * images.size(0)  # loss.item() is the avg loss per batch
-            _, predicted = torch.max(out.data, 1)
-            total_train += labels.size(0)
-            correct_train += (predicted == labels).sum().item()
+            #_, predicted = torch.max(out.data, 1)
+            #total_train += labels.size(0)
+            acc_train_batch = (out.argmax(1) == labels).float().mean()
+            correct_train += acc_train_batch.item()
 
         epoch_train_loss = running_loss / len(train_loader.dataset)
-        epoch_train_acc = correct_train / total_train
+        epoch_train_acc = correct_train / len(train_loader)
         train_loss.append(epoch_train_loss)
         train_accuracy.append(epoch_train_acc)
 
@@ -193,19 +195,20 @@ def train_model(model, train_loader, val_loader, criterion, optimizer,model_name
 
         with torch.no_grad():
             for batch, (images, labels) in enumerate(val_loader):
-                images.to(device)
-                labels.to(device)
+                images = images.to(device)
+                labels = labels.to(device)
                 out = model(images)
                 loss = criterion(out, labels)
 
                 val_loss += loss.item() * images.size(0)
-                _, predicted = torch.max(out.data, 1)
-                total_val += labels.size(0)
-                correct_val += (predicted == labels).sum().item()
+                #_, predicted = torch.max(out.data, 1)
+                #total_val += labels.size(0)
+                acc_val_batch = (out.argmax(1) == labels).float().mean()
+                correct_val += acc_val_batch.item()
 
             # Calculate validation statistics for the epoch
         epoch_val_loss = val_loss / len(val_loader.dataset)  
-        epoch_val_acc = correct_val / total_val              
+        epoch_val_acc = correct_val / len(val_loader)          
         validation_loss.append(epoch_val_loss)                    
         validation_accuracy.append(epoch_val_acc) 
 
@@ -222,4 +225,4 @@ def train_model(model, train_loader, val_loader, criterion, optimizer,model_name
     torch.save(training_details, f'train_val_accuracy_data.pt')
     return training_details
 
-train_model(model, val_dl, val_dl, criterion, optimizer,'recognize_disease_test')
+train_model(model, val_dl, val_dl, criterion, optimizer,'recognize_disease_25_12')
