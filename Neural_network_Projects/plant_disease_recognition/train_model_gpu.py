@@ -15,7 +15,7 @@ import torch.nn.functional as F
 class ImageDatasetFromFolders(Dataset):
     def __init__(self, path, transform=ToTensor):
         self.path = path
-        self.class_names = os.listdir(self.path)
+        self.class_names = sorted(os.listdir(self.path))
         self.transform = transform
         complete_dataset = []
         for dir in os.listdir(self.path):
@@ -58,7 +58,7 @@ test_dir = os.path.join(base,'Test')
 val_dir = os.path.join(base,'Validation')
 
 image_size = (256,256)
-transform = transforms.Compose([transforms.ToTensor(), transforms.Resize(image_size)])
+transform = transforms.Compose([transforms.Resize(image_size),transforms.ToTensor()])
 #transform = transforms.Compose([transforms.PILToTensor(), transforms.Resize(image_size)])
 # transform = transforms.Compose([transforms.Resize(image_size)])
 train_data = ImageDatasetFromFolders(train_dir, transform=transform)
@@ -122,12 +122,12 @@ class CNN(nn.Module):
         x = self.pool(x)           # Apply max pooling
         x = F.relu(self.conv2(x))  # Apply second convolution and ReLU activation
         x = self.pool(x)           # Apply max pooling
-        x = F.dropout(x, p=0.4, training=self.training) 
+        x = F.dropout(x, p=0.2, training=self.training) 
         x = F.relu(self.conv3(x))  # Apply first convolution and ReLU activation
         x = self.pool(x)           # Apply max pooling
         x = F.relu(self.conv4(x))  # Apply second convolution and ReLU activation
         x = self.pool(x)
-        x = F.dropout(x, p=0.4, training=self.training)  
+        x = F.dropout(x, p=0.2, training=self.training)  
         return x
     
     def forward(self,x):
@@ -147,7 +147,7 @@ print(model)
 #from torchinfo import summary
 #print(summary(model, (32,3,256,256)))
 
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=5e-4)
 criterion = torch.nn.CrossEntropyLoss()
 
 def train_model(model, train_loader, val_loader, criterion, optimizer,model_name, num_epochs=10):
