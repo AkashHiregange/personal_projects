@@ -46,8 +46,8 @@ def search_best_parameters(model, param_grid, model_name):
         grid_search.fit(X_train, y_train)
         best_parameters[col] = grid_search.best_params_
         print(f"Best parameters for {col}: ", grid_search.best_params_)
-        with open(f'models/{model_name}_best_parameters_combined_data_iso.pkl','wb') as f:
-            pickle.dump(best_parameters,f)
+    with open(f'models/{model_name}_best_parameters_combined_data_iso.pkl','wb') as f:
+        pickle.dump(best_parameters,f)
     return best_parameters
 
 # gradient boost
