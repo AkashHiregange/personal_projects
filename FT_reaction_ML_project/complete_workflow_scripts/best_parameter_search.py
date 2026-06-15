@@ -4,11 +4,39 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import pickle
 
-ft_features = pd.read_csv('ft_features_combined_iso_11_05.csv')
-ft_properties = pd.read_csv('ft_properties_combined_iso_03_05.csv')
+def processed_data(features_csv, properties_csv, features_columns_drop=None, properties_columns_drop=None):
+    features = pd.read_excel(features_csv)
+    properties = pd.read_excel(properties_csv)
+    if features_columns_drop is not None:
+        features.drop(features_columns_drop, axis=1, inplace=True)
+    if properties_columns_drop is not None:
+        properties.drop(properties_columns_drop, axis=1, inplace=True)
+    return features, properties
 
-#ft_features = ft_features[['%Mn', 'Ratio_H2/CO_in', 'Catalyst_form_pellet', 'Catalyst_form_powder']]
-#ft_features.drop(['%Mn','PSD', 'Ratio_H2/CO_in'], axis=1, inplace=True)
+ft_features, ft_properties = processed_data('features.xlsx', 'properties.xlsx') 
+
+def search_best_parameters(features, properties, model, param_grid, model_name):
+    print(model_name)
+    X = features
+    from sklearn.model_selection import GridSearchCV
+    best_parameters = {}
+    for i, col in enumerate(properties.columns):
+        print(f'training for {col}\n')
+        y = properties[col]
+        from sklearn.model_selection import train_test_split
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=123)
+        #from sklearn.preprocessing import StandardScaler
+        #scaler = StandardScaler()
+        #X_train_scaled = scaler.fit_transform(X_train)
+        #X_test_scaled = scaler.transform(X_test)
+#         param_grid = {'n_estimators': [100, 200, 300], 'max_depth': [2, 10, 20], 'learning_rate': [0.1, 0.5, 1]}
+        grid_search = GridSearchCV(model, param_grid, cv=5)
+        grid_search.fit(X_train, y_train)
+        best_parameters[col] = grid_search.best_params_
+        print(f"Best parameters for {col}: ", grid_search.best_params_)
+    with open(f'models/{model_name}_best_parameters.pkl','wb') as f:
+        pickle.dump(best_parameters,f)
+    return best_parameters
 
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
@@ -27,44 +55,21 @@ gbreg = GradientBoostingRegressor()
 knnreg = KNeighborsRegressor()
 xgbreg = XGBRegressor()
 
-X = ft_features
-def search_best_parameters(model, param_grid, model_name):
-    print(model_name)
-    from sklearn.model_selection import GridSearchCV
-    best_parameters = {}
-    for i, col in enumerate(ft_properties.columns):
-        print(f'training for {col}\n')
-        y = ft_properties[col]
-        from sklearn.model_selection import train_test_split
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=123)
-        #from sklearn.preprocessing import StandardScaler
-        #scaler = StandardScaler()
-        #X_train_scaled = scaler.fit_transform(X_train)
-        #X_test_scaled = scaler.transform(X_test)
-#         param_grid = {'n_estimators': [100, 200, 300], 'max_depth': [2, 10, 20], 'learning_rate': [0.1, 0.5, 1]}
-        grid_search = GridSearchCV(model, param_grid, cv=5)
-        grid_search.fit(X_train, y_train)
-        best_parameters[col] = grid_search.best_params_
-        print(f"Best parameters for {col}: ", grid_search.best_params_)
-    with open(f'models/{model_name}_best_parameters_combined_data_iso.pkl','wb') as f:
-        pickle.dump(best_parameters,f)
-    return best_parameters
-
 # gradient boost
-#param_grid_gb = {'n_estimators': [100, 200, 300], 'max_depth': [2, 3, 4, 6], 'learning_rate': [0.01, 0.05, 0.1], 'subsample':[0.6,0.7,0.9]}
-#print(search_best_parameters(gbreg, param_grid_gb, 'gradient_boost'))
+param_grid_gb = {'n_estimators': [100, 200, 300], 'max_depth': [2, 3, 4, 6], 'learning_rate': [0.01, 0.05, 0.1], 'subsample':[0.6,0.7,0.9]}
+print(search_best_parameters(ft_features, ft_properties, gbreg, param_grid_gb, 'gradient_boost'))
 
-#random forest
-#param_grid_rf = {'n_estimators': [100, 200, 250], 'max_depth': [5, 10, 15, 20], 'min_samples_leaf':[5,7,10]}
-#print(search_best_parameters(rfreg, param_grid_rf, 'random_forest'))
+# random forest
+param_grid_rf = {'n_estimators': [100, 200, 250], 'max_depth': [5, 10, 15, 20], 'min_samples_leaf':[5,7,10]}
+print(search_best_parameters(ft_features, ft_properties, rfreg, param_grid_rf, 'random_forest'))
 
-#decision_tree
-#param_grid_dt = {'max_depth': [2, 5, 10, 15], 'min_samples_leaf':[5,7,10], 'splitter':['best', 'random'],'min_samples_split':[10,20,30]}
-#print(search_best_parameters(dtreg, param_grid_dt, 'decision_tree'))
+# decision_tree
+param_grid_dt = {'max_depth': [2, 5, 10, 15], 'min_samples_leaf':[5,7,10], 'splitter':['best', 'random'],'min_samples_split':[10,20,30]}
+print(search_best_parameters(ft_features, ft_properties, dtreg, param_grid_dt, 'decision_tree'))
 
-#XGB
+# XGB
 param_grid_xgb = {'n_estimators': [100, 200, 250], 'max_depth': [6, 10, 15], 'learning_rate':[0.01,0.05,0.1]}
-print(search_best_parameters(xgbreg, param_grid_xgb, 'XGB'))
+print(search_best_parameters(ft_features, ft_properties, xgbreg, param_grid_xgb, 'XGB'))
 
 #KNN
 #param_grid_knn = {'n_neighbors': [10,15,20,25], 'p':[1,2,3], 'weights':['distance']}
@@ -73,5 +78,4 @@ print(search_best_parameters(xgbreg, param_grid_xgb, 'XGB'))
 #linear
 #param_grid_lr = {'fit_intercept': [True], 'tol':[1e-6]}
 #print(search_best_parameters(lr, param_grid_lr, 'linear'))
- 
  
