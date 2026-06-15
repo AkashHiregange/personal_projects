@@ -21,6 +21,8 @@ gbreg = GradientBoostingRegressor()
 knnreg = KNeighborsRegressor()
 xgbreg = XGBRegressor()
 
+ft_features, ft_properties = processed_data('features.xlsx', 'properties.xlsx') 
+
 # gradient boost
 param_grid_gb = {'n_estimators': [100, 200, 300], 'max_depth': [2, 3, 4, 6], 'learning_rate': [0.01, 0.05, 0.1], 'subsample':[0.6,0.7,0.9]}
 print(search_best_parameters(ft_features, ft_properties, gbreg, param_grid_gb, 'gradient_boost'))
