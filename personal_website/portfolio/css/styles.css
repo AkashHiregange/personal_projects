@@ -62,11 +62,11 @@
 
 .project-info {
     width: 100%;
-    height: 400px;
+    height: 500px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f8f9fa;
+    background: #ffffff;
     border-radius: 10px;
     overflow: hidden;
 }
